@@ -202,6 +202,8 @@ Tpm2DeviceLibFfaConstructor (
     goto Exit;
   }
 
+  PcdSet8S (PcdActiveTpmInterfaceType, mActiveTpmInterfaceType);
+  DEBUG ((DEBUG_INFO, "Setting Tpm Active Interface Type %d\n", mActiveTpmInterfaceType));
   mCRBIdleByPass = Tpm2GetIdleByPass ((VOID *)(UINTN)PcdGet64 (PcdTpmBaseAddress));
 
   Status = EFI_SUCCESS;
