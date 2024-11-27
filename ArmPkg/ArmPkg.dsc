@@ -141,6 +141,9 @@
   ArmPkg/Library/SemihostLib/SemihostLib.inf
   ArmPkg/Library/ArmExceptionLib/ArmExceptionLib.inf
   ArmPkg/Library/ArmExceptionLib/ArmRelocateExceptionLib.inf
+  ArmPkg/Library/ArmFfaLibEx/ArmFfaLibEx.inf
+  ArmPkg/Library/PlatformFfaInterruptLibNull/PlatformFfaInterruptLib.inf
+  ArmPkg/Library/Tpm2DeviceLibFfa/Tpm2DeviceLibFfa.inf
 
   ArmPkg/Drivers/CpuDxe/CpuDxe.inf
   ArmPkg/Drivers/CpuPei/CpuPei.inf
@@ -200,6 +203,7 @@
   ArmPkg/Drivers/ArmPsciMpServicesDxe/ArmPsciMpServicesDxe.inf
   ArmPkg/Drivers/MmCommunicationDxe/MmCommunication.inf
   ArmPkg/Library/ArmMmuLib/ArmMmuPeiLib.inf
+  ArmPkg/Library/SecurePartitionEntryPoint/SecurePartitionEntryPoint.inf
 
 [Components.AARCH64, Components.ARM]
   ArmPkg/Library/StandaloneMmMmuLib/ArmMmuStandaloneMmLib.inf
