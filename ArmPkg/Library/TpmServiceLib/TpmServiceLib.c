@@ -32,9 +32,6 @@
 
 typedef UINTN TpmStatus;
 
-/* TPM Service Variables */
-UINT8  TpmCommandBuffer[0xF80]; // Value comes from TpmPtp.h -> CrbDataBuffer
-
 /**
   Converts the passed in EFI_STATUS to a TPM_STATUS
 
@@ -175,6 +172,7 @@ HandleCommand (
   InternalTpmCrb->CrbControlStatus = 0;
 
   /* Copy the command data to the static buffer */
+  UINT8   TpmCommandBuffer[sizeof (InternalTpmCrb->CrbDataBuffer)];
   UINT32  ResponseDataLen = InternalTpmCrb->CrbControlResponseSize;
   UINT32  CommandDataLen  = InternalTpmCrb->CrbControlCommandSize;
 
