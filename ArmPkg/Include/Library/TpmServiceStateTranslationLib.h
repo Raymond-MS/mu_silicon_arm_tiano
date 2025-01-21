@@ -22,7 +22,7 @@
 **/
 EFI_STATUS
 TpmSstGoIdle (
-  UINT8 Locality
+  UINT8  Locality
   );
 
 /**
@@ -36,7 +36,7 @@ TpmSstGoIdle (
 **/
 EFI_STATUS
 TpmSstCmdReady (
-  UINT8 Locality
+  UINT8  Locality
   );
 
 /**
@@ -51,8 +51,8 @@ TpmSstCmdReady (
 **/
 EFI_STATUS
 TpmSstStart (
-  UINT8                 Locality,
-  PTP_CRB_REGISTERS_PTR InternalTpmCrb
+  UINT8                  Locality,
+  PTP_CRB_REGISTERS_PTR  InternalTpmCrb
   );
 
 /**
@@ -66,7 +66,7 @@ TpmSstStart (
 **/
 EFI_STATUS
 TpmSstLocalityRequest (
-  UINT8 Locality
+  UINT8  Locality
   );
 
 /**
@@ -86,7 +86,7 @@ TpmSstIsIdleBypassSupported (
 
 **/
 VOID
-TpmSstInit(
+TpmSstInit (
   VOID
   );
 

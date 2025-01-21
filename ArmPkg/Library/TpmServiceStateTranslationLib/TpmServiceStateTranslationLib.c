@@ -27,10 +27,11 @@
 #define PTP_TIMEOUT_MAX  (90000 * 1000) // 90s
 
 /* TPM Service State Translation Library Variables */
-STATIC BOOLEAN IsCrbInterface;
-STATIC BOOLEAN IsIdleBypassSupported;
+STATIC BOOLEAN  IsCrbInterface;
+STATIC BOOLEAN  IsIdleBypassSupported;
 
 /* TPM Service State Translation Library Static Functions */
+
 /**
   Returns the BurstCount from the ExternalFifo
 
@@ -44,8 +45,8 @@ STATIC BOOLEAN IsIdleBypassSupported;
 STATIC
 EFI_STATUS
 FifoReadBurstCount (
-  PTP_FIFO_REGISTERS_PTR ExternalFifo,
-  UINT16                *BurstCount
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo,
+  UINT16                  *BurstCount
   )
 {
   UINT32  Timeout;
@@ -89,8 +90,8 @@ WaitRegisterBits (
   UINT32  Timeout
   )
 {
-  UINT32 RegRead;
-  UINT32 WaitTime;
+  UINT32  RegRead;
+  UINT32  WaitTime;
 
   /* Attempt to read the register based on the TPM type. */
   for (WaitTime = 0; WaitTime < Timeout; WaitTime += DELAY_AMOUNT) {
@@ -112,7 +113,7 @@ WaitRegisterBits (
 }
 
 /**
-  Copies command data to the TPM 
+  Copies command data to the TPM
 
   @param  Locality          The locality to copy to
   @param  TpmCommandBuffer  The command buffer containing the data
@@ -125,21 +126,21 @@ WaitRegisterBits (
 STATIC
 EFI_STATUS
 CopyCommandData (
-  UINT8  Locality,
-  UINT8 *TpmCommandBuffer,
-  UINT32 CommandDataLen
+  UINT8   Locality,
+  UINT8   *TpmCommandBuffer,
+  UINT32  CommandDataLen
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
-  UINT32                 Index;
-  UINT16                 BurstCount;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
+  UINT32                  Index;
+  UINT16                  BurstCount;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     /* Copy the command data to the CRB buffer. */
     for (Index = 0; Index < CommandDataLen; Index++) {
       MmioWrite8 ((UINTN)&ExternalCrb->CrbDataBuffer[Index], TpmCommandBuffer[Index]);
@@ -156,7 +157,7 @@ CopyCommandData (
     Status = EFI_SUCCESS;
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     /* Copy the command data to the FIFO depending on the burst count. */
     Index = 0;
     while (Index < CommandDataLen) {
@@ -174,11 +175,11 @@ CopyCommandData (
 
     /* Check to make sure the STS_EXPECT register changed from 1 to 0. */
     Status = WaitRegisterBits (
-              (UINT32 *)&ExternalFifo->Status,
-              PTP_FIFO_STS_VALID,
-              PTP_FIFO_STS_EXPECT,
-              PTP_TIMEOUT_C
-              );
+               (UINT32 *)&ExternalFifo->Status,
+               PTP_FIFO_STS_VALID,
+               PTP_FIFO_STS_EXPECT,
+               PTP_TIMEOUT_C
+               );
   }
 
   return Status;
@@ -196,35 +197,35 @@ CopyCommandData (
 STATIC
 EFI_STATUS
 StartCommand (
-  UINT8 Locality
+  UINT8  Locality
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     MmioWrite32 ((UINTN)&ExternalCrb->CrbControlStart, PTP_CRB_CONTROL_START);
     Status = WaitRegisterBits (
-              &ExternalCrb->CrbControlStart,
-              0,
-              PTP_CRB_CONTROL_START,
-              PTP_TIMEOUT_MAX
-              );
+               &ExternalCrb->CrbControlStart,
+               0,
+               PTP_CRB_CONTROL_START,
+               PTP_TIMEOUT_MAX
+               );
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
- 
+
     /* Set the tpmGo bit in the Status register. */
     MmioWrite8 ((UINTN)&ExternalFifo->Status, PTP_FIFO_STS_GO);
     Status = WaitRegisterBits (
-              (UINT32 *)&ExternalFifo->Status,
-              (PTP_FIFO_STS_VALID | PTP_FIFO_STS_DATA),
-              0,
-              PTP_TIMEOUT_MAX
-              );
+               (UINT32 *)&ExternalFifo->Status,
+               (PTP_FIFO_STS_VALID | PTP_FIFO_STS_DATA),
+               0,
+               PTP_TIMEOUT_MAX
+               );
   }
 
   return Status;
@@ -247,23 +248,23 @@ STATIC
 EFI_STATUS
 GetResponseHeader (
   UINT8   Locality,
-  UINT8  *TpmCommandBuffer,
-  UINT32 *ResponseDataLen
+  UINT8   *TpmCommandBuffer,
+  UINT32  *ResponseDataLen
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
-  UINT32                 Index;
-  UINT16                 BurstCount;
-  UINT32                 TpmOutSize;
-  UINT16                 Data16;
-  UINT32                 Data32;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
+  UINT32                  Index;
+  UINT16                  BurstCount;
+  UINT32                  TpmOutSize;
+  UINT16                  Data16;
+  UINT32                  Data32;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     for (Index = 0; Index < sizeof (TPM2_RESPONSE_HEADER); Index++) {
       TpmCommandBuffer[Index] = MmioRead8 ((UINTN)&ExternalCrb->CrbDataBuffer[Index]);
     }
@@ -271,7 +272,7 @@ GetResponseHeader (
     Status = EFI_SUCCESS;
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     Index      = 0;
     BurstCount = 0;
     while (Index < sizeof (TPM2_RESPONSE_HEADER)) {
@@ -328,21 +329,21 @@ Exit:
 STATIC
 EFI_STATUS
 CopyResponseData (
-  UINT8  Locality,
-  UINT8 *TpmCommandBuffer,
-  UINT32 ResponseDataLen
+  UINT8   Locality,
+  UINT8   *TpmCommandBuffer,
+  UINT32  ResponseDataLen
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
-  UINT32                 Index;
-  UINT16                 BurstCount;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
+  UINT32                  Index;
+  UINT16                  BurstCount;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     for (Index = sizeof (TPM2_RESPONSE_HEADER); Index < ResponseDataLen; Index++) {
       TpmCommandBuffer[Index] = MmioRead8 ((UINTN)&ExternalCrb->CrbDataBuffer[Index]);
     }
@@ -350,7 +351,7 @@ CopyResponseData (
     Status = EFI_SUCCESS;
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
-  
+
     Index = sizeof (TPM2_RESPONSE_HEADER);
     while (Index < ResponseDataLen) {
       Status = FifoReadBurstCount (ExternalFifo, &BurstCount);
@@ -374,6 +375,7 @@ CopyResponseData (
 }
 
 /* TPM Service State Translation Library Global Functions */
+
 /**
   Initiates the transition to the Idle state
 
@@ -385,12 +387,12 @@ CopyResponseData (
 **/
 EFI_STATUS
 TpmSstGoIdle (
-  UINT8 Locality
+  UINT8  Locality
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
@@ -400,20 +402,21 @@ TpmSstGoIdle (
      * the CRB Control Area Status register to make sure the tpmIdle bit was set. */
     MmioWrite32 ((UINTN)&ExternalCrb->CrbControlRequest, PTP_CRB_CONTROL_AREA_REQUEST_GO_IDLE);
     Status = WaitRegisterBits (
-              &ExternalCrb->CrbControlRequest,
-              0,
-              PTP_CRB_CONTROL_AREA_REQUEST_GO_IDLE,
-              PTP_TIMEOUT_C
-              );
+               &ExternalCrb->CrbControlRequest,
+               0,
+               PTP_CRB_CONTROL_AREA_REQUEST_GO_IDLE,
+               PTP_TIMEOUT_C
+               );
     if (Status == EFI_SUCCESS) {
       Status = WaitRegisterBits (
-              &ExternalCrb->CrbControlStatus,
-              PTP_CRB_CONTROL_AREA_STATUS_TPM_IDLE,
-              0,
-              PTP_TIMEOUT_C
-              );
+                 &ExternalCrb->CrbControlStatus,
+                 PTP_CRB_CONTROL_AREA_STATUS_TPM_IDLE,
+                 0,
+                 PTP_TIMEOUT_C
+                 );
     }
-  /* Note that there is no goIdle in the FIFO TPM implementation. Going idle is the same as commandReady. */
+
+    /* Note that there is no goIdle in the FIFO TPM implementation. Going idle is the same as commandReady. */
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
@@ -421,11 +424,11 @@ TpmSstGoIdle (
      * indicates the TPM is ready. */
     MmioWrite8 ((UINTN)&ExternalFifo->Status, PTP_FIFO_STS_READY);
     Status = WaitRegisterBits (
-              (UINT32 *)&ExternalFifo->Status,
-              PTP_FIFO_STS_READY,
-              0,
-              PTP_TIMEOUT_B
-              );
+               (UINT32 *)&ExternalFifo->Status,
+               PTP_FIFO_STS_READY,
+               0,
+               PTP_TIMEOUT_B
+               );
   }
 
   return Status;
@@ -442,12 +445,12 @@ TpmSstGoIdle (
 **/
 EFI_STATUS
 TpmSstCmdReady (
-  UINT8 Locality
+  UINT8  Locality
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
@@ -457,18 +460,18 @@ TpmSstCmdReady (
      * the CRB Control Area Status register to make sure the tpmIdle bit was cleared. */
     MmioWrite32 ((UINTN)&ExternalCrb->CrbControlRequest, PTP_CRB_CONTROL_AREA_REQUEST_COMMAND_READY);
     Status = WaitRegisterBits (
-              &ExternalCrb->CrbControlRequest,
-              0,
-              PTP_CRB_CONTROL_AREA_REQUEST_COMMAND_READY,
-              PTP_TIMEOUT_C
-              );
+               &ExternalCrb->CrbControlRequest,
+               0,
+               PTP_CRB_CONTROL_AREA_REQUEST_COMMAND_READY,
+               PTP_TIMEOUT_C
+               );
     if (Status == EFI_SUCCESS) {
       Status = WaitRegisterBits (
-              &ExternalCrb->CrbControlStatus,
-              0,
-              PTP_CRB_CONTROL_AREA_STATUS_TPM_IDLE,
-              PTP_TIMEOUT_C
-              );
+                 &ExternalCrb->CrbControlStatus,
+                 0,
+                 PTP_CRB_CONTROL_AREA_STATUS_TPM_IDLE,
+                 PTP_TIMEOUT_C
+                 );
     }
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
@@ -477,11 +480,11 @@ TpmSstCmdReady (
      * indicates the TPM is ready. */
     MmioWrite8 ((UINTN)&ExternalFifo->Status, PTP_FIFO_STS_READY);
     Status = WaitRegisterBits (
-              (UINT32 *)&ExternalFifo->Status,
-              PTP_FIFO_STS_READY,
-              0,
-              PTP_TIMEOUT_B
-              );
+               (UINT32 *)&ExternalFifo->Status,
+               PTP_FIFO_STS_READY,
+               0,
+               PTP_TIMEOUT_B
+               );
   }
 
   return Status;
@@ -499,52 +502,52 @@ TpmSstCmdReady (
 **/
 EFI_STATUS
 TpmSstStart (
-  UINT8                 Locality,
-  PTP_CRB_REGISTERS_PTR InternalTpmCrb
+  UINT8                  Locality,
+  PTP_CRB_REGISTERS_PTR  InternalTpmCrb
   )
 {
-  EFI_STATUS Status;
-  UINT8      TpmCommandBuffer[sizeof(InternalTpmCrb->CrbDataBuffer)];
-  UINT32     ResponseDataLen;
-  UINT32     CommandDataLen;
+  EFI_STATUS  Status;
+  UINT8       TpmCommandBuffer[sizeof (InternalTpmCrb->CrbDataBuffer)];
+  UINT32      ResponseDataLen;
+  UINT32      CommandDataLen;
 
   /* Init the local variables. */
   ResponseDataLen = InternalTpmCrb->CrbControlResponseSize;
   CommandDataLen  = InternalTpmCrb->CrbControlCommandSize;
 
   /* Copy the CRB command data to the local buffer. */
-  CopyMem(TpmCommandBuffer, InternalTpmCrb->CrbDataBuffer, CommandDataLen);
+  CopyMem (TpmCommandBuffer, InternalTpmCrb->CrbDataBuffer, CommandDataLen);
 
   DEBUG_CODE_BEGIN ();
   DumpTpmInputBlock (CommandDataLen, TpmCommandBuffer);
   DEBUG_CODE_END ();
 
   /* Copy the command data. */
-  Status = CopyCommandData(Locality, TpmCommandBuffer, CommandDataLen);
+  Status = CopyCommandData (Locality, TpmCommandBuffer, CommandDataLen);
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
 
   /* Start command execution. */
-  Status = StartCommand(Locality);
+  Status = StartCommand (Locality);
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
 
   /* Get the response header. */
-  Status = GetResponseHeader(Locality, TpmCommandBuffer, &ResponseDataLen);
+  Status = GetResponseHeader (Locality, TpmCommandBuffer, &ResponseDataLen);
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
 
   /* Copy the response data. */
-  Status = CopyResponseData(Locality, TpmCommandBuffer, ResponseDataLen);
+  Status = CopyResponseData (Locality, TpmCommandBuffer, ResponseDataLen);
   if (EFI_ERROR (Status)) {
     goto Exit;
   }
 
   /* Copy the CRB response data from the local buffer. */
-  CopyMem(InternalTpmCrb->CrbDataBuffer, TpmCommandBuffer, ResponseDataLen);
+  CopyMem (InternalTpmCrb->CrbDataBuffer, TpmCommandBuffer, ResponseDataLen);
 
 Exit:
   DEBUG_CODE_BEGIN ();
@@ -565,12 +568,12 @@ Exit:
 **/
 EFI_STATUS
 TpmSstLocalityRequest (
-  UINT8 Locality
+  UINT8  Locality
   )
 {
-  EFI_STATUS             Status;
-  PTP_CRB_REGISTERS_PTR  ExternalCrb;
-  PTP_FIFO_REGISTERS_PTR ExternalFifo;
+  EFI_STATUS              Status;
+  PTP_CRB_REGISTERS_PTR   ExternalCrb;
+  PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
   if (IsCrbInterface) {
@@ -578,21 +581,21 @@ TpmSstLocalityRequest (
 
     MmioWrite32 ((UINTN)&ExternalCrb->LocalityControl, PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS);
     Status = WaitRegisterBits (
-              &ExternalCrb->LocalityStatus,
-              PTP_CRB_LOCALITY_STATUS_GRANTED,
-              0,
-              PTP_TIMEOUT_A
-              );
+               &ExternalCrb->LocalityStatus,
+               PTP_CRB_LOCALITY_STATUS_GRANTED,
+               0,
+               PTP_TIMEOUT_A
+               );
   } else {
     ExternalFifo = (PTP_FIFO_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     MmioWrite8 ((UINTN)&ExternalFifo->Access, PTP_FIFO_ACC_RQUUSE);
     Status = WaitRegisterBits (
-              (UINT32 *)&ExternalFifo->Access,
-              (PTP_FIFO_ACC_ACTIVE | PTP_FIFO_VALID),
-              0,
-              PTP_TIMEOUT_A
-              );
+               (UINT32 *)&ExternalFifo->Access,
+               (PTP_FIFO_ACC_ACTIVE | PTP_FIFO_VALID),
+               0,
+               PTP_TIMEOUT_A
+               );
   }
 
   return Status;
@@ -618,13 +621,13 @@ TpmSstIsIdleBypassSupported (
 
 **/
 VOID
-TpmSstInit(
+TpmSstInit (
   VOID
   )
 {
   /* Note that the register we are looking at is located at the same address
    * regardless of if the TPM type is FIFO or CRB.  */
-  PTP_CRB_REGISTERS_PTR ExternalCrb;
+  PTP_CRB_REGISTERS_PTR  ExternalCrb;
 
   /* Need to determine the TPM interface type. */
   ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)PcdGet64 (PcdTpmBaseAddress);

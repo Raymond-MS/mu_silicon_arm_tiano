@@ -542,13 +542,13 @@ TpmServiceInit (
   /* Initialize the TPM Service State Translation Library. */
   TpmSstInit ();
 
-  /* Initalize our default state information. */
+  /* Initialize our default state information. */
   CurrentState   = TPM_STATE_IDLE;
   ActiveLocality = NUM_TPM_LOCALITIES; // Invalid - No active locality
 }
 
 /**
-  Deinitializes the TPM service
+  De-initializes the TPM service
 
 **/
 VOID
