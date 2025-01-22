@@ -1,5 +1,9 @@
 /** @file
-  Definitions for the TPM Service State Translation Library
+  Definitions for the TPM Service State Translation Library. This library's
+  main purpose is to translate the states of the TPM service's CRB states to
+  the main TPM's interface states. (i.e. TPM PC CRB -> TPM FIFO) A user of the
+  TPM service should only need to update this library with the proper TPM
+  interface type for their device.
 
   Copyright (c), Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
