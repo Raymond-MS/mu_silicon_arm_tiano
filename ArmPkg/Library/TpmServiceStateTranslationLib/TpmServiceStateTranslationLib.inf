@@ -30,11 +30,6 @@
   IoLib
   TimerLib
   DebugLib
-  PlatformFfaInterruptLib
-  ArmSvcLib
-  ArmSmcLib
-  ArmFfaLib
-  ArmFfaLibEx
   Tpm2DebugLib
 
 [Pcd]

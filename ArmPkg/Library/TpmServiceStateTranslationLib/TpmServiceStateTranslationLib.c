@@ -1,6 +1,12 @@
 /** @file
-  Implementation for the TPM Service State Translation Library
+  Implementation for the TPM Service State Translation Library. This library's
+  main purpose is to translate the states of the TPM service's CRB states to
+  the main TPM's interface states. (i.e. TPM PC CRB -> TPM FIFO) A user of the
+  TPM service should only need to update this library with the proper TPM
+  interface type for their device.
 
+  Copyright (c) 2013 - 2018, Intel Corporation. All rights reserved.<BR>
+  (C) Copyright 2015 Hewlett Packard Enterprise Development LP<BR>
   Copyright (c), Microsoft Corporation.
   SPDX-License-Identifier: BSD-2-Clause-Patent
 
@@ -27,8 +33,8 @@
 #define PTP_TIMEOUT_MAX  (90000 * 1000) // 90s
 
 /* TPM Service State Translation Library Variables */
-STATIC BOOLEAN  IsCrbInterface;
-STATIC BOOLEAN  IsIdleBypassSupported;
+STATIC BOOLEAN  mIsCrbInterface;
+STATIC BOOLEAN  mIsIdleBypassSupported;
 
 /* TPM Service State Translation Library Static Functions */
 
@@ -95,7 +101,7 @@ WaitRegisterBits (
 
   /* Attempt to read the register based on the TPM type. */
   for (WaitTime = 0; WaitTime < Timeout; WaitTime += DELAY_AMOUNT) {
-    if (IsCrbInterface) {
+    if (mIsCrbInterface) {
       RegRead = MmioRead32 ((UINTN)Register);
     } else {
       RegRead = (UINT32)MmioRead8 ((UINTN)Register);
@@ -138,7 +144,7 @@ CopyCommandData (
   UINT16                  BurstCount;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     /* Copy the command data to the CRB buffer. */
@@ -205,7 +211,7 @@ StartCommand (
   PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     MmioWrite32 ((UINTN)&ExternalCrb->CrbControlStart, PTP_CRB_CONTROL_START);
@@ -262,7 +268,7 @@ GetResponseHeader (
   UINT32                  Data32;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     for (Index = 0; Index < sizeof (TPM2_RESPONSE_HEADER); Index++) {
@@ -341,7 +347,7 @@ CopyResponseData (
   UINT16                  BurstCount;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     for (Index = sizeof (TPM2_RESPONSE_HEADER); Index < ResponseDataLen; Index++) {
@@ -395,7 +401,7 @@ TpmSstGoIdle (
   PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     /* Set the goIdle bit in the CRB Control Request register. Wait for it to clear and then check
@@ -453,7 +459,7 @@ TpmSstCmdReady (
   PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     /* Set the cmdReady bit in the CRB Control Request register. Wait for it to clear and then check
@@ -576,7 +582,7 @@ TpmSstLocalityRequest (
   PTP_FIFO_REGISTERS_PTR  ExternalFifo;
 
   /* Determine which TPM structure to access */
-  if (IsCrbInterface) {
+  if (mIsCrbInterface) {
     ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)(PcdGet64 (PcdTpmBaseAddress) + (Locality * LOCALITY_OFFSET));
 
     MmioWrite32 ((UINTN)&ExternalCrb->LocalityControl, PTP_CRB_LOCALITY_CONTROL_REQUEST_ACCESS);
@@ -613,7 +619,7 @@ TpmSstIsIdleBypassSupported (
   VOID
   )
 {
-  return IsIdleBypassSupported;
+  return mIsIdleBypassSupported;
 }
 
 /**
@@ -632,15 +638,15 @@ TpmSstInit (
   /* Need to determine the TPM interface type. */
   ExternalCrb = (PTP_CRB_REGISTERS_PTR)(UINTN)PcdGet64 (PcdTpmBaseAddress);
   if ((ExternalCrb->InterfaceId & INTERFACE_TYPE_MASK) == 1) {
-    IsCrbInterface = TRUE;
+    mIsCrbInterface = TRUE;
   } else {
-    IsCrbInterface = FALSE;
+    mIsCrbInterface = FALSE;
   }
 
   /* Need to determine if idle bypass is supported. */
   if (ExternalCrb->InterfaceId & IDLE_BYPASS_MASK) {
-    IsIdleBypassSupported = TRUE;
+    mIsIdleBypassSupported = TRUE;
   } else {
-    IsIdleBypassSupported = FALSE;
+    mIsIdleBypassSupported = FALSE;
   }
 }
