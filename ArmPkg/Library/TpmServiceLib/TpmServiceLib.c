@@ -293,8 +293,15 @@ HandleCommand (
 
       break;
 
-    /* The proper state flow should be: IDLE -> READY -> START -> IDLE/READY. */
+    /* The normal state flow should be: IDLE -> READY -> COMPLETE -> IDLE. */
     default:
+      DEBUG ((DEBUG_ERROR, "INVALID State - Attempting to transition to IDLE State\n"));
+      Status = TpmSstGoIdle (mActiveLocality);
+      if (Status == EFI_SUCCESS) {
+        mCurrentState = TPM_STATE_IDLE;
+        SetMem ((void *)InternalTpmCrb->CrbDataBuffer, sizeof (InternalTpmCrb->CrbDataBuffer), 0x00);
+      }
+
       break;
   }
 

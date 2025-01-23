@@ -520,6 +520,7 @@ TpmSstStart (
   /* Init the local variables. */
   ResponseDataLen = InternalTpmCrb->CrbControlResponseSize;
   CommandDataLen  = InternalTpmCrb->CrbControlCommandSize;
+  SetMem (TpmCommandBuffer, sizeof (InternalTpmCrb->CrbDataBuffer), 0);
 
   /* Copy the CRB command data to the local buffer. */
   CopyMem (TpmCommandBuffer, InternalTpmCrb->CrbDataBuffer, CommandDataLen);
