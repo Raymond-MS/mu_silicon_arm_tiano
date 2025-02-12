@@ -949,3 +949,29 @@ FfaConsoleLog64 (
   ASSERT (Result.Arg0 == ARM_FID_FFA_SUCCESS_AARCH32);
   return EFI_SUCCESS;
 }
+
+EFI_STATUS
+EFIAPI
+FfaNsResInfoGet (
+  UINT32  TargetId,
+  UINT64  Flags,
+  UINT32  ByteOffsetTag
+  )
+{
+  ARM_SXC_ARGS  Request = { 0 };
+  ARM_SXC_ARGS  Result  = { 0 };
+
+  Request.Arg0 = ARM_FID_FFA_MSG_NS_RES_INFO_GET;
+  Request.Arg1 = TargetId;
+  Request.Arg2 = Flags;
+  Request.Arg3 = ByteOffsetTag;
+
+  ArmCallSxc (&Request, &Result);
+
+  if (Result.Arg0 == ARM_FID_FFA_ERROR) {
+    return FfaStatusToEfiStatus (Result.Arg2);
+  }
+
+  ASSERT (Result.Arg0 == ARM_FID_FFA_SUCCESS_AARCH64);
+  return EFI_SUCCESS;
+}

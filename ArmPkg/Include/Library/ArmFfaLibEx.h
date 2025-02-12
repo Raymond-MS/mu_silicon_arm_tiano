@@ -472,4 +472,22 @@ FfaConsoleLog64 (
   UINTN       Length
   );
 
+/**
+ * @brief       Queries the Non-secure memory that is available to the secure
+ *              world.
+ *
+ * @param TargetId       The endpoint to query (MBZ if Flag indicates all endpoints)
+ * @param Flags          The NS memory type and whether or not to query from a specific
+ *                       endpoint or all endpoints.
+ * @param ByteOffsetTag  ByteOffset of the memory if it doesn't fit in the RX/TX buffer
+ * @return               The FF-A error status code
+ */
+EFI_STATUS
+EFIAPI
+FfaNsResInfoGet (
+  UINT32  TargetId,
+  UINT64  Flags,
+  UINT32  ByteOffsetTag
+  );
+
 #endif /* FF_A_HELPER_LIB_H_ */
